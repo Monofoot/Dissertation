@@ -1,0 +1,18 @@
+Note that words which begin with a dollar $ means said word can be ambiguous. A variable, if you will.
+The build environment assumes the following directory hierarchy (Possibly different - this might only apply to Ubuntu systems):
+/home/$user/$build-directory/repos/Dissertation
+That is, a base $build-directory supersedes the project. A repos directory is nested in here, where there will be a few repositories you need to clone for items to build in the $build-directory successfully.
+
+To successfully run this project, the following steps must be followed:
++ Make a $build-directory.
+	+ mkdir $build-directory
++ Change directory to the $build-directory and create a repos folder.
+	+ cd $build-directory
+	+ mkdir repos
++ From this point there are a few repositories you need to clone:
+	+ git clone $repository-link
+	+ The dissertation repo: https://github.com/Monofoot/Dissertation.git
+	+ Umoria: https://github.com/dungeons-of-moria/umoria.git
+
+
+
