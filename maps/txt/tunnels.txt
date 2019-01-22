@@ -1,0 +1,49 @@
+
+define 1 room 1 [defroom]
+define 2 room 2 [defroom]
+define 3 room 3 [defroom]
+define 4 room 4 [defroom]
+define 5 room 5 [defroom]
+define 6 room 6 [defroom]
+define 7 room 7 [defroom]
+define 8 room 8 [defroom]
+define s worldspawn
+define o monster monster_demon_imp
+define c monster monster_demon_hellknight
+define h monster monster_demon_hellknight
+define S monster monster_demon_tick
+define i light
+
+define d default ceil colour 210 199 130
+
+define yellow colour 190 180 170
+define darkyellow colour 190 185 66
+define flame colour 170 107 7
+
+define red colour 180 0 0
+define blue colour 0 0 180
+define green colour 0 180 0
+
+define f light type floor
+define m light type mid
+define defroom default mid [yellow] default ceil [flame]
+
+
+###############################################################
+#1                  # 2                o    #  3              #
+# s                 .     o                 .               o #
+#                 S #             S         #                 #
+###########################################################...#
+#                                                     7   #   #
+# S                                                       # 4 #
+#   ###################################################...# o #
+#   #                                                     #   #
+#   #  h                  o               8   S   S   S   #   #
+#   #                         o                           #   #
+#   #  h                  o                   S   S   S   #   #
+#   #                                                     #   #
+#...#######################################################...#
+#6                                                        .S  #
+#  h                                 o                  o . 5 #
+#                                                         .   #
+###############################################################

@@ -1,0 +1,40 @@
+
+define 1 room 1 [d]
+define 2 room 2 [d]
+define 3 room 3
+define 4 room 4
+define 5 room 5
+define 6 room 6
+define s worldspawn
+
+define R ammo ammo_rockets_large 16
+define G ammo ammo_grenade_small 16
+define L ammo moveable_item_rocketlauncher 1
+define A ammo item_medkit 1
+define l light
+define d default ceil colour 210 199 130
+
+define yellow colour 190 180 170
+define red colour 180 0 0
+define blue colour 0 0 180
+define green colour 0 180 0
+
+define f light type floor [green]
+define m light type mid [red]
+define c light type ceil [blue]
+define z [c] [f] [m]
+
+##################################
+# 1    z   c   c # 2             #
+#                #               #
+#       s       f#f              #
+#                .               #
+#                .               #
+#               f#f              #
+#      c   c   c #               #
+###..#############################
+# 3    #  4   #  5  #  6  #
+#      .      .     .     #
+#      .      .     .     #
+#      #      #     #     #
+###########################
