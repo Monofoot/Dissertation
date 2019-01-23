@@ -1,0 +1,38 @@
+Moria Code Documentation
+=======================
+
+Moria
+------
+Moria was released in 1983 by Robert Alan Koeneke and heavily influenced Blizzard’s Diablo series and other classics like Angband. The level generator in Moria produces rooms for the player to interact with. 
+
+Installation
+-------------
+Clone the repo
++ git clone https://github.com/dungeons-of-moria/umoria.git
+Change directory to the repo
++ cd umoria/
+Type the following to make umoria
++ cmake .
++ make 
++ make install
+If you want umoria to be installed out-of-repo, simply copy the new umoria folder to wherever you want
+
+Running Moria
+-------------
+Navigate to where the umoria folder is. It should contain a umoria file.
+To run umoria, simply type
+./umoria
+
+Source
+------
+Moria can be obtained by visiting: https://github.com/dungeons-of-moria/umoria
+
+License
+------
+Umoria is released under the GNU General Public License v2.0.
+
+In 2007 Ben Asselstine and Ben Shadwick started the free-moria project to re-license UMoria 5.5.2 under GPL v2 by obtaining permission from all the contributing authors. A year later, they finally succeeded in their goal and in late 2008 the Moria maintainer, David Grabiner, released Umoria 5.6 under a GPL v2 license.
+
+Useful Links
+------------
+Moria can be hard to play. Take this before you go: http://gmoria.nongnu.org/moria.html
