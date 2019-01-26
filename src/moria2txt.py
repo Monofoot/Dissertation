@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from random import randint
-
 # A few constant global variables we need to
 # declare.
 MAX_HEIGHT = 66
@@ -47,10 +45,6 @@ class Dungeon_t:
 
 # Create a new dungeon object here.
 dg = Dungeon_t
-
-# Wrap a randint function in this definition.
-def rnd():
-    return randint()
 
 def DungeonGenerate():
 	# Initialize a room with rows and columns.
