@@ -53,7 +53,6 @@ def DungeonGenerate():
 
     # Create a new 20 x 20 room map.
 	room_map = [20], [20]
-	rnd()
 
 
 def generateCave():
