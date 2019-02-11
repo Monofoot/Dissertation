@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+# Parameters for the Lehmer generator using
+# Schrage's implementation.
+# 2^31 - 1
+RNG_M = 2147483647
+RNG_A = 48271
+RNG_Q = RNG_M / RNG_A
+RNG_R = RNG_M % RNG_A
+rnd_seed = 0
+
+print RNG_R
+
 # A few constant global variables we need to
 # declare.
 MAX_HEIGHT = 66
@@ -42,6 +53,11 @@ class Dungeon_t:
     width = 0
 
     panel = Panel_t
+
+def getRandomSeed():
+	return rnd_seed
+
+print getRandomSeed()
 
 # Create a new dungeon object here.
 dg = Dungeon_t
