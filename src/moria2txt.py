@@ -1,15 +1,64 @@
 #!/usr/bin/env python
+import time
 
 # Parameters for the Lehmer generator using
 # Schrage's implementation.
 # 2^31 - 1
-RNG_M = 2147483647
+RNG_M = 2**31 - 1
 RNG_A = 48271
 RNG_Q = RNG_M / RNG_A
 RNG_R = RNG_M % RNG_A
-rnd_seed = 0
 
-print RNG_R
+# Get the current unix time and store it in a clock variable.
+# Use the clock variable to parse a new random seed in
+# setRandomSeed()
+def getUnixTime():
+	clock = int(time.time())
+	return clock
+
+def setRandomSeed(seed):
+	# Set seed between value 1 and m-1
+	# IMPORTANT VARIABLE #
+	# Driver for most of the RNG. Pay attention as any problems
+	# are likely derived from rnd_seed!
+	global rnd_seed
+	rnd_seed = seed % (RNG_M - 1)
+	return rnd_seed
+
+def seedsInitialize(seed):
+	clock_var = 0
+	# If seed is equal to 0 then generate a new seed
+	if seed == 0:
+		clock_var = getUnixTime()
+	# else set the seed to the parsed seed
+	else:
+		clock_var = seed
+	setRandomSeed(clock_var)
+
+# The magic.
+# Notes: my testing is near non-existent for this Lehmer
+# generator. It looks to work perfectly fine to me,
+# but should problems arise in the future then I shoulder the blame
+# as I did a shoddy job in writing any tests for this.
+def rnd():
+	high = rnd_seed / RNG_Q
+	low = rnd_seed % RNG_Q
+	test = RNG_A * low - RNG_R * high
+
+	# I really, really wanted the return to be rnd_seed
+	# but I'm having a local variable problem. It's near 11pm and
+	# I'm shattered, so for now test will do - horrible, I know,
+	# but probably easily fixable.
+	return test
+
+# Return a random number with a max constraint.
+def randomNumber(max):
+	return rnd() % max + 1
+
+# Note for Gaius -> is calling a function like this okay?
+# Seems scary to me, not sure why!
+seedsInitialize(0)
+print(rnd())
 
 # A few constant global variables we need to
 # declare.
@@ -53,11 +102,6 @@ class Dungeon_t:
     width = 0
 
     panel = Panel_t
-
-def getRandomSeed():
-	return rnd_seed
-
-print getRandomSeed()
 
 # Create a new dungeon object here.
 dg = Dungeon_t
