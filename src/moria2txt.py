@@ -55,6 +55,8 @@ MAX_WIDTH = 198
 SCREEN_HEIGHT = 22
 SCREEN_WIDTH = 66
 DUN_ROOMS_MEAN = 32
+QUART_HEIGHT = SCREEN_HEIGHT / 4
+QUART_WIDTH = SCREEN_WIDTH / 4
 
 # Get the current unix time and store it in a clock variable.
 # Use the clock variable to parse a new random seed in
@@ -181,17 +183,42 @@ class Dungeon_t:
 # Create a new dungeon object here.
 dg = Dungeon_t
 
+def dungeonBuildRoom(y, x):
+	print y, x
+
 def DungeonGenerate():
 	# Initialize a room with rows and columns.
 	row_rooms = 2 * (dg.height / SCREEN_HEIGHT)
 	col_rooms = 2 * (dg.width / SCREEN_WIDTH)
 
-	# Create a 2d array of rows and columns.
-	# room_map = [False], [False] * 20
+	# Create a tuple of rooms and columns.
+	room_map = []
 
-	# Set the array to return false.
+	# Create a random_room_count using the dungeon mean constant.
 	random_room_count = randomNumberNormalDistribution(DUN_ROOMS_MEAN, 2)
-	print random_room_count
+
+	# Store the rows and columns in the room_map tuple.
+	# The purpose of this isn't so much for the integers as it is
+	# a test to see if an entry exists.
+	for i in range(random_room_count):
+		room_map.append((row_rooms, col_rooms))
+
+	location_id = 0
+	y_locations = []
+	x_locations = []
+
+	for row in range(row_rooms):
+		for col in range(col_rooms):
+			if row or col in room_map:
+				y_locations.append((row * SCREEN_HEIGHT >> 1) + QUART_HEIGHT)
+				x_locations.append((col * SCREEN_WIDTH >> 1) + QUART_WIDTH)
+
+				# Build a room at each of these locations.
+				dungeonBuildRoom(y_locations[location_id], x_locations[location_id])
+				
+				# A bit sloppy, I know, but increment location_id by 1.
+				location_id = location_id + 1
+			
 
 
 
