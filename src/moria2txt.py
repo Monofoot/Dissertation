@@ -57,6 +57,9 @@ SCREEN_WIDTH = 66
 DUN_ROOMS_MEAN = 32
 QUART_HEIGHT = SCREEN_HEIGHT / 4
 QUART_WIDTH = SCREEN_WIDTH / 4
+TILE_DARK_FLOOR = 1
+TILE_LIGHT_FLOOR = 2
+TILE_GRANITE_WALL = 12
 
 # Get the current unix time and store it in a clock variable.
 # Use the clock variable to parse a new random seed in
@@ -148,12 +151,6 @@ def randomNumberNormalDistribution(mean, standard):
 class Coord_t:
     x = 0
     y = 0
-
-# Tile_t
-# Note: not sure if we'll need this just yet.
-class Tile_t:
-	# ID of a room feature; walls, floors, door etc
-	feature_id = None
 	
 # Panel_t
 # Again not too sure about needing to include this.
@@ -178,13 +175,58 @@ class Dungeon_t:
     height = 0
     width = 0
 
+    current_level = 0
+
     panel = Panel_t
+
+	# Tile is a tuple containing two entries:
+	# the x and y of the tile and the feature id.
+	# Feature id is a constant int.
+    tile = []
 
 # Create a new dungeon object here.
 dg = Dungeon_t
 
+def dungeonFloorTileForLevel():
+	# Essentially test whether or not we're in the town.
+	# Not too sure if we'll be using a town for this iteration
+	# of a Moria port but we'll see.
+	if dg.current_level <= randomNumber(25):
+		return TILE_LIGHT_FLOOR
+	return TILE_DARK_FLOOR
+
 def dungeonBuildRoom(y, x):
-	print y, x
+	# Parse the floor tile.
+	floor = dungeonFloorTileForLevel()
+
+	# Use randomNumber to randomize the height, depth and l + r values.
+	height = y - randomNumber(4)
+	depth = y + randomNumber(3)
+	left = x - randomNumber(11)
+	right = x + randomNumber(11)
+
+	for height in range(depth):
+		for left in range(right):
+			dg.tile.append((height, left, floor))
+	
+	# Begin setting coordinates for the walls.
+	# This is done by accessing the tile tuple and setting the:
+	# y, x and feature id.
+	# Note: I'm nooooot too sure if using iheight and idepth is a great solution
+	# to a C++ for loop which says for int i = height - 1, but it seems to be working
+	# for the time being...
+	iheight = height -1
+	idepth = depth + 1
+	for iheight in range(idepth):
+		dg.tile.append((iheight, left - 1, TILE_GRANITE_WALL))
+		dg.tile.append((iheight, right + 1, TILE_GRANITE_WALL))
+	
+	for left in range(right):
+		dg.tile.append((height - 1, left, TILE_GRANITE_WALL))
+		dg.tile.append((depth + 1, left, TILE_GRANITE_WALL))
+
+	print dg.tile
+
 
 def DungeonGenerate():
 	# Initialize a room with rows and columns.
