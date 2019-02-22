@@ -12,7 +12,6 @@
 # Schrage's implementation.
 # 2^31 - 1
 RNG_M = 2**31 - 1
-print RNG_M
 RNG_A = 48271
 RNG_Q = RNG_M / RNG_A
 RNG_R = RNG_M % RNG_A

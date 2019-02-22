@@ -3,6 +3,7 @@
 # a bad idea.
 from moria2txtconfig import *
 import time
+import random
 
 # Get the current unix time and store it in a clock variable.
 # Use the clock variable to parse a new random seed in
@@ -31,7 +32,7 @@ def seedsInitialize(seed):
 	
 	# Make it a litte more random. Problem before was that it's just the clock!
 	clock_var += 8762
-	clock_var += 113452L
+	clock_var += 113452
 	setRandomSeed(clock_var)
 
 # The magic.
@@ -52,13 +53,23 @@ def rnd():
 
 	return rnd_seed
 
+# I wrote this one myself so it might not be very elegant,
+# I'm sure it wouldn't pass any speed tests... but it does the job for now, anyway.
+# I know randint() exists but if a seed initializer exists in this script
+# I'd prefer to use that seed than spool a new one for the random module.
+def randomBetweenAB(A, B):
+	result = 0
+	test = randomNumber(B)
+	while test < A or test > B:
+		test = randomNumber(B)
+		if test > A or test < B:
+			result = test
+			break
+	result = test
+	return result
 
 # Return a random number with a max constraint.
 def randomNumber(max):
-	tmp = rnd()
-	print "rnd is: ", tmp
-	mod = tmp % max
-	print "modded is: ", mod
 	return (rnd() % max) + 1
 
 # Generate a random number of normal distribution.
@@ -137,24 +148,37 @@ class Dungeon_t:
 dg = Dungeon_t
 
 class DungeonGenerator():
-	# Constructor takes:
-	# the width, height and max_rooms FOR NOW.
-	def _init__(self, height, width, max_rooms, max_rows, max_cols):
-		self.height = height
-		self.width = width
-		self.max_rooms = max_rooms
-		self.max_rows = max_rows
-		self.max_cols = max_cols
+    def __init__(self, max_height = 15, max_width = 15,
+                height = MAX_HEIGHT, width = MAX_WIDTH, 
+				random_room_count = randomNumberNormalDistribution(DUN_ROOMS_MEAN, 2)):
+        self.max_height = max_height
+        self.max_width = max_width
+        self.height = height
+        self.width = width
+        self.random_room_count = random_room_count
 
-	def generateCave(self):
-		top = 0
-		bottom = 0
-		left = 0
-		right = 0
-		
-		top = randomNumber((randomNumber(5) + randomNumber(15)))
-		
-		print top
+    def generateCave(self):
+		# generateCave will return a list with four entries:
+		# [x, y, width, height]
+		# Where x and y are the co-ordinates where the room will initially
+		# be drawn, and the width and height are by which magnitude
+		# So if x is 10 and y is 13, go to point 10, 13 - if height is 4, place
+		# 4 walls up and return back to 10, 13 - if width is 9, place 9 walls to the
+		# left.
+		x = 0
+		y = 0
+		height = 0
+		width = 0
+
+		width = randomBetweenAB(5, 15)
+		height = randomBetweenAB(5, 15)
+		x = randomBetweenAB(1, (self.width - width - 1))
+		y = randomBetweenAB(1, (self.height - height - 1))
+
+		print "height: ", height
+		print "width: ", width
+		print "x: ", x
+		print "y: ", y
 
 
 
@@ -197,6 +221,8 @@ def dungeonBuildRoom(y, x):
 	for left in range(right):
 		dg.tile.append((height - 1, left, TILE_GRANITE_WALL))
 		dg.tile.append((depth + 1, left, TILE_GRANITE_WALL))
+	
+	print dg.tile
 
 def DungeonGenerate():
 	# Initialize a room with rows and columns.
@@ -233,7 +259,7 @@ def DungeonGenerate():
 
 	# things acting weird here. double check if things break.
 
-	door_index = 0
+
 
 	# TO-DO: Continue this function and then move on. Looks like a lot more work to do.
 	# This is the dungeon build for loop. Ignore it for now, and come back to it when
@@ -269,6 +295,7 @@ def main():
 	seedsInitialize(0)
 	testGen = DungeonGenerator()
 	testGen.generateCave()
+	#generateCave()
 
 
 main()
