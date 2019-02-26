@@ -71,7 +71,7 @@ TILE_GRANITE_WALL = 12
 # txt2pen. As such, a few of Moria's original tiles have been changed so
 # that we don't break the txt>pen>map pipeline.
 TILES = {'stone': ' ',
-        'floor': '.',
+        'floor': ' ',
         'wall': '#'}
 # To-do: Write the definitions at some point. Example:
 # define 1 room 1 with the number 1 in the top left corner of each room.
