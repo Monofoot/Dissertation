@@ -56,8 +56,8 @@ normal_table = [206,     613,    1022,    1430,    1838,    2245,    2652,    30
 
 # Dungeon Parameters
 
-MAX_HEIGHT = 66
-MAX_WIDTH = 198
+MAX_HEIGHT = 64
+MAX_WIDTH = 64
 SCREEN_HEIGHT = 22
 SCREEN_WIDTH = 66
 DUN_ROOMS_MEAN = 32
@@ -70,9 +70,9 @@ TILE_GRANITE_WALL = 12
 # must correspond with the lexical semantics established in
 # txt2pen. As such, a few of Moria's original tiles have been changed so
 # that we don't break the txt>pen>map pipeline.
-TILES = {'wall': '#',
-	     'door': '.',
-		 'floor': ' '}
+TILES = {'stone': ' ',
+        'floor': '.',
+        'wall': '#'}
 # To-do: Write the definitions at some point. Example:
 # define 1 room 1 with the number 1 in the top left corner of each room.
 # Should be easy enough.
