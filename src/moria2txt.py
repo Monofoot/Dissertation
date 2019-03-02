@@ -123,7 +123,8 @@ class DungeonGenerator():
         self.rooms = []
         self.dungeon = []
         # Moria uses 32 dungeons consistently, but this should hopefully randomize that.
-        self.max_rooms = randomNumber(DUN_ROOMS_MEAN)
+        #self.max_rooms = randomNumber(DUN_ROOMS_MEAN)
+        self.max_rooms = 5
         self.tiles = TILES
         self.tiles_level = []
 
@@ -186,9 +187,6 @@ class DungeonGenerator():
         if rooma_x < (roomb_x + roomb_width) and roomb_x < (rooma_x + rooma_width):
             i = 1
 
-        
-
-
     def DungeonGenerate(self):
 		# Start by building a dungeon of empty tiles.
         for x in range(self.height):
@@ -220,6 +218,7 @@ class DungeonGenerator():
             for second_run in range(room[2]):
                 for third_run in range(room[3]):
                     self.dungeon[room[1] + third_run][room[0] + second_run] = 'floor'
+                    self.dungeon[room[1] + 1][room[0] + 1] = room_id
 
 
         for across in range(1, self.height - 1):
@@ -262,6 +261,10 @@ class DungeonGenerator():
                     tmp.append(self.tiles['floor'])
                 if y == 'wall':
                     tmp.append(self.tiles['wall'])
+                # Also scan for the room_no key so we know this is
+                # where our room numbers are.
+                if isinstance(y, int):
+                    tmp.append(str(y + 1))
             self.tiles_level.append(''.join(tmp))
         # Must pay strict attention to syntax in existing .txt maps.
         # Follow this format:
@@ -272,6 +275,7 @@ class DungeonGenerator():
         # define y extra
         #\n
         # map
+        # TO-DO: figure out why we get an extra \n here
         print("\n")
         for room_id in enumerate(self.rooms):
             print("define", room_id[0] + 1, "room ", room_id[0] + 1)
