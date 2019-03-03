@@ -127,6 +127,7 @@ class DungeonGenerator():
         self.max_rooms = 5
         self.tiles = TILES
         self.tiles_level = []
+        self.tunnels = []
 
         # Soon I'd like to be able to set these parameters
         # through the command line, it should be easy enough.
@@ -153,6 +154,10 @@ class DungeonGenerator():
 		# This list will be the main driver for the dungeon generation. 
 		# It sets where the rooms wil be built and their size.
         return [x, y, vertical, horizontal]
+
+    def createTunnel(self, x, y, x1, y1):
+        if x == x1 and y == y1 or x == x1 or y == y1:
+            return [(x, y), (x1, y1)]
 
     # Function to sort the rooms and make sure there are connecting doors
     # or entries so the map is traverseable. This fixes the problem I was having
@@ -181,11 +186,19 @@ class DungeonGenerator():
         # Now check if there are any unwanted collisions between rooms.
         # First do this by checking collisions along the vertical plane, and then
         # in another loop we can check the horizontal plane.
-        # TEMPORARY -> this calls so infrequently it might not be needed, but if later
-        # down the line we get some problems then we can solve it here. Lazy coding,
-        # sorry future Rob.
         if rooma_x < (roomb_x + roomb_width) and roomb_x < (rooma_x + rooma_width):
-            i = 1
+            join_rooma_x = randomBetweenAB(roomb_x, rooma_test_x)
+            join_roomb_x = join_rooma_x
+            sorty = [rooma_y, roomb_y, rooma_test_y, roomb_test_y]
+            # Sort the list.
+            sorty.sort()
+            join_rooma_y = sorty[1] + 1
+            join_roomb_y = sorty[2] - 1
+
+            # Now that we have the coordinates we can
+            # generate tunnels to link the rooms.
+            tunnel = self.createTunnel(join_rooma_x, join_rooma_y, join_roomb_x, join_roomb_y)
+            self.tunnels.append(tunnel)
 
     def DungeonGenerate(self):
 		# Start by building a dungeon of empty tiles.
@@ -211,15 +224,24 @@ class DungeonGenerator():
 
             for aroom in range(len(self.rooms) - 1):
                 self.DungeonConnections(self.rooms[aroom], self.rooms[aroom + 1])
+
 		# Begin setting the tiles.
 		# Can maybe split this into a function call...
         # The first run sets the floors.
+        # The second run sets the room numbers in the corner of each room.
         for room_id, room in enumerate(self.rooms):
             for second_run in range(room[2]):
                 for third_run in range(room[3]):
                     self.dungeon[room[1] + third_run][room[0] + second_run] = 'floor'
                     self.dungeon[room[1] + 1][room[0] + 1] = room_id
 
+        for tunnel in self.tunnels:
+            x, y = tunnel[0]
+            x1, y1 = tunnel[1]
+            for across in range(abs(x - x1) + 1):
+                for up in range(abs(y - y1) + 1):
+                    self.dungeon[min(y, y1) + up][
+                        min(x, x1) + across] = 'floor'
 
         for across in range(1, self.height - 1):
             for up in range(1, self.width - 1):
@@ -275,8 +297,6 @@ class DungeonGenerator():
         # define y extra
         #\n
         # map
-        # TO-DO: figure out why we get an extra \n here
-        print("\n")
         for room_id in enumerate(self.rooms):
             print("define", room_id[0] + 1, "room ", room_id[0] + 1)
         print("\n")
