@@ -137,14 +137,21 @@ class DungeonGenerator():
 				random_room_count = 0):
         # Moria uses 32 dungeons consistently, but this should hopefully randomize that.
         # Check some user validation here.
-        if args.maxrooms and args.minrooms:
+        if args.maxrooms or args.minrooms:
             # Add an extra layer of validation for the maxrooms.
             # This is because we cannot allow them to exceed 19.
             # Moria usually defaults to around 32 but because of the Chisel porting
             # we run out of character spaces for rooms above 19.
             # Actually... this might not be true..... double check this
+            # If we just have a max room, default the min room
+            if not args.minrooms: 
+            # Else if we just have the min room, default the max room
+            # Uhh.... For now let's default it to 1, that seems safe.
+                args.minrooms = 1
+            elif not args.maxrooms:
+                # Moria uses the mean of 32 rooms as default.
+                args.maxrooms = randomNumber(DUN_ROOMS_MEAN)
             self.random_room_count = randomBetweenAB(int(args.maxrooms), int(args.minrooms))
-            print("X: ", self.random_room_count)
         else:
             self.random_room_count = randomNumber(DUN_ROOMS_MEAN)
         if args.maxsize:
