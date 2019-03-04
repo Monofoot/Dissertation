@@ -3,6 +3,10 @@
 # a bad idea.
 from moria2txtconfig import *
 import time
+# I'm really unhappy about doing this,
+# but didn't want to write a function for random selection of strings.
+# If I have time then I will come back and change this.
+import random
 
 # Get the current unix time and store it in a clock variable.
 # Use the clock variable to parse a new random seed in
@@ -56,16 +60,20 @@ def rnd():
 # I'm sure it wouldn't pass any speed tests... but it does the job for now, anyway.
 # I know randint() exists but if a seed initializer exists in this script
 # I'd prefer to use that seed than spool a new one for the random module.
-def randomBetweenAB(A, B):
-    result = 0
-    test = randomNumber(B)
-    while test < A or test > B:
-        test = randomNumber(B)
-        if test > A or test < B:
-            result = test
-            break
-    result = test
-    return result
+def randomBetweenAB(min, max):
+    # TO-DO:
+    # this function is broken. It works with lower
+    # order number but seems to fall apart when it comes to
+    # generating the tunnels. For now I'm going to substitute it
+    # with random.int, but it means that tunnels will be left out of
+    # potential seed reproduction. This makes me very sad
+    # and when I have enough time I will come back here to write a very
+    # pretty and mathematical min max generator.
+    # I've read online that something like:
+    # Math.floor(Math.random() * (myMax - myMin +1)) + myMin;
+    # should work? Much like the randomNumber() function below.
+    # return int(rnd() * (max - min + 1) + min)
+    return int(rnd() % (max - min + 1) + min)
 
 # Return a random number with a max constraint.
 def randomNumber(max):
@@ -112,7 +120,7 @@ def randomNumberNormalDistribution(mean, standard):
 	return mean + offset
 
 class DungeonGenerator():
-    def __init__(self, min_size = 5, max_size = 15,
+    def __init__(self, min_size = 10, max_size = 20,
                 height = MAX_HEIGHT, width = MAX_WIDTH, 
 				random_room_count = 0, max_rooms = 0):
         self.min_size = min_size
@@ -124,7 +132,7 @@ class DungeonGenerator():
         self.dungeon = []
         # Moria uses 32 dungeons consistently, but this should hopefully randomize that.
         #self.max_rooms = randomNumber(DUN_ROOMS_MEAN)
-        self.max_rooms = 5
+        self.max_rooms = 9
         self.tiles = TILES
         self.tiles_level = []
         self.tunnels = []
@@ -132,7 +140,7 @@ class DungeonGenerator():
         # Soon I'd like to be able to set these parameters
         # through the command line, it should be easy enough.
 
-    def dungeonBuildRoom(self):
+    def DungeonBuildRoom(self):
 		# generateCave will return a list with four entries:
 		# [x, y, width, height]
 		# Where x and y are the co-ordinates where the room will initially
@@ -155,58 +163,153 @@ class DungeonGenerator():
 		# It sets where the rooms wil be built and their size.
         return [x, y, vertical, horizontal]
 
-    def createTunnel(self, x, y, x1, y1):
+    def CreateTunnel(self, x, y, x1, y1, join='xy'):
         if x == x1 and y == y1 or x == x1 or y == y1:
             return [(x, y), (x1, y1)]
+        else:
+            # Hopefully our 'join' parameter works here. ...currently experimental.
+            jtype = None
+            # Do some set theory here. Thankfully we don't need to do the math ourself as
+            # the magic of Python provides a function for this.
+            if join is 'xy' and set([0, 1]).intersection(set([x, x1, y, y1])):
+                jtype = 'bottom'
+            elif join is 'xy' and set([self.width - 1, self.width - 2]).intersection(set([x, x1])) or set(
+                 [self.height - 1, self.height - 2]).intersection(set([y, y1])):
+                jtype = 'top'
+            # We must have at least one choice (otherwise we're returning None), so use random choice to decide a top
+            # or bottom. To-do would be to write my own random choice function if I have time.
+            elif join is 'xy':
+                jtype = random.choice(['top', 'bottom'])
+            else:
+                # Last case. If we're not random enough, force this.
+                jtype = join
+            # Finally, perform actions based on whether we're top or bottom:
+            if jtype is 'bottom':
+                return [(x, y), (x1, y), (x1, y1)]
+            elif jtype is 'top':
+                return [(x, y), (x, y1), (x1, y1)]
+            # NOTE: If we're running into issues, put a print statement in the DungeonGenerate function.
+            # If self.tunnels is returning ANY none, then something is wrong in this function. We are expecting
+            # none nones! In the future I'd like to add some validation here to make sure that never happens,
+            # but for the time being it doesn't seem to be an issue.
 
     # Function to sort the rooms and make sure there are connecting doors
     # or entries so the map is traverseable. This fixes the problem I was having
     # of rooms existing detached from each other.
-    def DungeonConnections(self, rooma, roomb):
+    # TO-DO: Tunnel generation is currently breaking my min max generator.
+    # Figure it out when you have enough time. :(
+    def DungeonConnections(self, rooma, roomb, join='xy'):
         # Store room a and b in a list.
-        list_of_rooms = [rooma, roomb]
-        # Big shout out to pcg.wiki.com for providing this amazing lambda.
-        list_of_rooms.sort(key=lambda x_y: x_y[0])
-        
-        rooma_x      = list_of_rooms[0][0]
-        rooma_y      = list_of_rooms[0][1]
-        rooma_width  = list_of_rooms[0][2]
-        rooma_height = list_of_rooms[0][3]
-        rooma_test_x = rooma_x + rooma_width - 1
-        rooma_test_y = rooma_y + rooma_height - 1
-
+        sorted_room = [rooma, roomb]
+        # Use a lambda to sort the rooms. This essentially sets the
+        # lesser of the two rooms as the first room.
+        sorted_room.sort(key=lambda x_y: x_y[0])
+ 
+        rooma_x = sorted_room[0][0]
+        rooma_y = sorted_room[0][1]
+        rooma_width = sorted_room[0][2]
+        rooma_height = sorted_room[0][3]
+        rooma_x_2 = rooma_x + rooma_width - 1
+        rooma_y_2 = rooma_y + rooma_height - 1
+ 
         # Now the same for the second room.
-        roomb_x      = list_of_rooms[1][0]
-        roomb_y      = list_of_rooms[1][1]
-        roomb_width  = list_of_rooms[1][2]
-        roomb_height = list_of_rooms[1][3]
-        roomb_test_x = roomb_x + roomb_width - 1
-        roomb_test_y = roomb_y + roomb_height - 1
-
-        # Now check if there are any unwanted collisions between rooms.
-        # First do this by checking collisions along the vertical plane, and then
-        # in another loop we can check the horizontal plane.
+        roomb_x = sorted_room[1][0]
+        roomb_y = sorted_room[1][1]
+        roomb_width = sorted_room[1][2]
+        h2 = sorted_room[1][3]
+        roomb_x_2 = roomb_x + roomb_width - 1
+        roomb_y_2 = roomb_y + h2 - 1
+ 
+        # So what we're essentially doing here is checking if the x of room a is greater than
+        # the width and x of room a and the x of room b is greater than the x of room a and room a's width.
+        # If it is then we do a bit of randomBetweenAB magic and connect them with tunnels.
         if rooma_x < (roomb_x + roomb_width) and roomb_x < (rooma_x + rooma_width):
-            join_rooma_x = randomBetweenAB(roomb_x, rooma_test_x)
-            join_roomb_x = join_rooma_x
-            sorty = [rooma_y, roomb_y, rooma_test_y, roomb_test_y]
-            # Sort the list.
-            sorty.sort()
-            join_rooma_y = sorty[1] + 1
-            join_roomb_y = sorty[2] - 1
-
+            jrooma_x = randomBetweenAB(roomb_x, rooma_x_2)
+            jroomb_x = jrooma_x
+            tmp_y = [rooma_y, roomb_y, rooma_y_2, roomb_y_2]
+            tmp_y.sort()
+            jrooma_y = tmp_y[1] + 1
+            jroomb_y = tmp_y[2] - 1
+ 
             # Now that we have the coordinates we can
             # generate tunnels to link the rooms.
-            tunnel = self.createTunnel(join_rooma_x, join_rooma_y, join_roomb_x, join_roomb_y)
+            tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y)
             self.tunnels.append(tunnel)
+ 
+        # Do the same as above but for the y coordinates now.
+        elif rooma_y < (roomb_y + h2) and roomb_y < (rooma_y + rooma_height):
+            if roomb_y > rooma_y:
+                jrooma_y = randomBetweenAB(roomb_y, rooma_y_2)
+                jroomb_y = jrooma_y
+            else:
+                jrooma_y = randomBetweenAB(rooma_y, roomb_y_2)
+                jroomb_y = jrooma_y
+            tmp_x = [rooma_x, roomb_x, rooma_x_2, roomb_x_2]
+            tmp_x.sort()
+            jrooma_x = tmp_x[1] + 1
+            jroomb_x = tmp_x[2] - 1
+ 
+            tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y)
+            self.tunnels.append(tunnel)
+ 
+        # However, if there's no collisions then we generate our own links:
+        else:
+            jtype = None
+                # Not happy using random choice here, hopefully will
+                # have enough time to write my own random choice function.
+            if join is 'xy':
+                jtype = random.choice(['top', 'bottom'])
+            # If it's not xy, then set our type to whatever is being parsed.
+            # Most of the time this will just default to xy, though.
+            else:
+                jtype = join
+ 
+            # Here is our logic. So, depending on what our jtype is, we can
+            # generate our tunnels along this function.
+            if jtype is 'top':
+                if roomb_y > rooma_y:
+                    jrooma_x = rooma_x_2 + 1
+                    jrooma_y = randomBetweenAB(rooma_y, rooma_y_2)
+                    jroomb_x = randomBetweenAB(roomb_x, roomb_x_2)
+                    jroomb_y = roomb_y - 1
+                    # We're at the botton here, so set it to generate along the bottom.
+                    tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y, 'bottom')
+                    self.tunnels.append(tunnel)
+                # Else we must be at the top, so generate the top.
+                else:
+                    jrooma_x = randomBetweenAB(rooma_x, rooma_x_2)
+                    jrooma_y = rooma_y - 1
+                    jroomb_x = roomb_x - 1
+                    jroomb_y = randomBetweenAB(roomb_y, roomb_y_2)
+                    tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y, 'top')
+                    self.tunnels.append(tunnel)
+ 
+            # Same as above but flipping the x - we're at the bottom now.
+            elif jtype is 'bottom':
+                if roomb_y > rooma_y:
+                    jrooma_x = randomBetweenAB(rooma_x, rooma_x_2)
+                    jrooma_y = rooma_y_2 + 1
+                    jroomb_x = roomb_x - 1
+                    jroomb_y = randomBetweenAB(roomb_y, roomb_y_2)
+                    tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y, 'top')
+                    self.tunnels.append(tunnel)
+                else:
+                    jrooma_x = rooma_x_2 + 1
+                    jrooma_y = randomBetweenAB(rooma_y, rooma_y_2)
+                    jroomb_x = randomBetweenAB(roomb_x, roomb_x_2)
+                    jroomb_y = roomb_y_2 + 1
+                    tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y, 'bottom')
+                    self.tunnels.append(tunnel)
+        
 
     def DungeonGenerate(self):
 		# Start by building a dungeon of empty tiles.
         for x in range(self.height):
-            self.dungeon.append(['stone'] * self.width)
-		# Double check we're setting the rooms list to empty - it's done in the
+            self.dungeon.append(['empty'] * self.width)
+		# Double check we're setting the rooms list AND tunnels to empty - it's done in the
 		# constructor but may have been changed in other functions.
         self.rooms = []
+        self.tunnels = []
 
 		# Probably a bad variable name.
         room_iterator = self.max_rooms * 5
@@ -215,15 +318,15 @@ class DungeonGenerator():
             # In this for loop we cycle through the iterator and
             # generate new rooms with random coordinates.
             # After storing these in temporary lists we append them to the global rooms list.
-            new_room = self.dungeonBuildRoom()
+            new_room = self.DungeonBuildRoom()
             self.rooms.append(new_room)
 			# Make sure we're sticking to the defined maximum rooms.
 			# At the moment this is a constant, but should be changeable from command line.
             if len(self.rooms) >= self.max_rooms:
                  break
 
-            for aroom in range(len(self.rooms) - 1):
-                self.DungeonConnections(self.rooms[aroom], self.rooms[aroom + 1])
+        for aroom in range(len(self.rooms) - 1):
+            self.DungeonConnections(self.rooms[aroom], self.rooms[aroom + 1])
 
 		# Begin setting the tiles.
 		# Can maybe split this into a function call...
@@ -235,6 +338,10 @@ class DungeonGenerator():
                     self.dungeon[room[1] + third_run][room[0] + second_run] = 'floor'
                     self.dungeon[room[1] + 1][room[0] + 1] = room_id
 
+        # Draw the tunnels here. We're doing the same for the room generation up above,
+        # but this time we use the tunnels list instead of the rooms list.
+        # It's important we allow validation for the third element in the tunnel list -
+        # lots of time spent tracking down that bug.
         for tunnel in self.tunnels:
             x, y = tunnel[0]
             x1, y1 = tunnel[1]
@@ -242,43 +349,51 @@ class DungeonGenerator():
                 for up in range(abs(y - y1) + 1):
                     self.dungeon[min(y, y1) + up][
                         min(x, x1) + across] = 'floor'
+            
+            if len(tunnel) == 3:
+                x2, y2 = tunnel[2]
 
+                for across in range(abs(x1 - x2) + 1):
+                    for up in range(abs(y1 - y2) + 1):
+                        self.dungeon[min(y1, y2) + up][min(x1, x2) + across] = 'floor'
+                
+        # Set the walls by deciding if we're at the edge of a floor tile.
         for across in range(1, self.height - 1):
             for up in range(1, self.width - 1):
                 if self.dungeon[across][up] == 'floor':
                     # If we've reached a floor, check the adjacent tiles.
                     # At this point we're decided whether or not to add a wall
                     # or a door.
-                    if self.dungeon[across - 1][up - 1] == 'stone':
+                    if self.dungeon[across - 1][up - 1] == 'empty':
                         self.dungeon[across - 1][up - 1] = 'wall'
 
-                    if self.dungeon[across - 1][up] == 'stone':
+                    if self.dungeon[across - 1][up] == 'empty':
                         self.dungeon[across - 1][up] = 'wall'
 
-                    if self.dungeon[across - 1][up + 1] == 'stone':
+                    if self.dungeon[across - 1][up + 1] == 'empty':
                         self.dungeon[across - 1][up + 1] = 'wall'
 
-                    if self.dungeon[across][up - 1] == 'stone':
+                    if self.dungeon[across][up - 1] == 'empty':
                         self.dungeon[across][up - 1] = 'wall'
 
-                    if self.dungeon[across][up + 1] == 'stone':
+                    if self.dungeon[across][up + 1] == 'empty':
                         self.dungeon[across][up + 1] = 'wall'
 
-                    if self.dungeon[across + 1][up - 1] == 'stone':
+                    if self.dungeon[across + 1][up - 1] == 'empty':
                         self.dungeon[across + 1][up - 1] = 'wall'
 
-                    if self.dungeon[across + 1][up] == 'stone':
+                    if self.dungeon[across + 1][up] == 'empty':
                         self.dungeon[across + 1][up] = 'wall'
 
-                    if self.dungeon[across + 1][up + 1] == 'stone':
+                    if self.dungeon[across + 1][up + 1] == 'empty':
                         self.dungeon[across + 1][up + 1] = 'wall'
 
-    def drawDungeon(self):
+    def DrawDungeon(self):
         for x_num, x in enumerate(self.dungeon):
             tmp = []
             for y_num, y in enumerate(x):
-                if y == 'stone':
-                    tmp.append(self.tiles['stone'])
+                if y == 'empty':
+                    tmp.append(self.tiles['empty'])
                 if y == 'floor':
                     tmp.append(self.tiles['floor'])
                 if y == 'wall':
@@ -303,10 +418,12 @@ class DungeonGenerator():
         [print(x) for x in self.tiles_level]
 
 def main():
+    # The seed initializer is GOOD .... but until we get rid of
+    # the use of random.choice it won't be perfect. Shame.
 	seedsInitialize(0)
 	testGen = DungeonGenerator()
 	testGen.DungeonGenerate()
-	testGen.drawDungeon()
+	testGen.DrawDungeon()
 
 
 main()
