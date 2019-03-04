@@ -3,10 +3,22 @@
 # a bad idea.
 from moria2txtconfig import *
 import time
+import argparse
 # I'm really unhappy about doing this,
 # but didn't want to write a function for random selection of strings.
 # If I have time then I will come back and change this.
 import random
+
+# Allow user to input variables which will affect Moria's
+# constants.
+parser = argparse.ArgumentParser(description="Map generator for Penguin Tower's ASCII levels.")
+parser.add_argument("--maxrooms", help="Set the maximum amount of rooms.")
+parser.add_argument("--minrooms", help="Set the minimum amount of rooms.")
+parser.add_argument("--maxsize", help="Set the maximum size of each room.")
+parser.add_argument("--minsize", help="Set the minimum size of each room.")
+parser.add_argument("--height", help="The height of the dungeon.")
+parser.add_argument("--width", help="The width of the dungeon.")
+args = parser.parse_args()
 
 # Get the current unix time and store it in a clock variable.
 # Use the clock variable to parse a new random seed in
@@ -120,19 +132,39 @@ def randomNumberNormalDistribution(mean, standard):
 	return mean + offset
 
 class DungeonGenerator():
-    def __init__(self, min_size = 10, max_size = 20,
+    def __init__(self, min_size = 5, max_size = 10,
                 height = MAX_HEIGHT, width = MAX_WIDTH, 
-				random_room_count = 0, max_rooms = 0):
-        self.min_size = min_size
-        self.max_size = max_size
-        self.height = height
-        self.width = width
-        self.random_room_count = randomNumberNormalDistribution(DUN_ROOMS_MEAN, 2)
+				random_room_count = 0):
+        # Moria uses 32 dungeons consistently, but this should hopefully randomize that.
+        # Check some user validation here.
+        if args.maxrooms and args.minrooms:
+            # Add an extra layer of validation for the maxrooms.
+            # This is because we cannot allow them to exceed 19.
+            # Moria usually defaults to around 32 but because of the Chisel porting
+            # we run out of character spaces for rooms above 19.
+            # Actually... this might not be true..... double check this
+            self.random_room_count = randomBetweenAB(int(args.maxrooms), int(args.minrooms))
+            print("X: ", self.random_room_count)
+        else:
+            self.random_room_count = randomNumber(DUN_ROOMS_MEAN)
+        if args.maxsize:
+            self.max_size = int(args.maxsize)
+        else:
+            self.max_size = max_size
+        if args.minsize:
+            self.min_size = int(args.minsize)
+        else:
+            self.min_size = min_size
+        if args.height:
+            self.height = int(args.height)
+        else:
+            self.height = height
+        if args.width:
+            self.width = int(args.width)
+        else:
+            self.width = width
         self.rooms = []
         self.dungeon = []
-        # Moria uses 32 dungeons consistently, but this should hopefully randomize that.
-        #self.max_rooms = randomNumber(DUN_ROOMS_MEAN)
-        self.max_rooms = 9
         self.tiles = TILES
         self.tiles_level = []
         self.tunnels = []
@@ -312,7 +344,7 @@ class DungeonGenerator():
         self.tunnels = []
 
 		# Probably a bad variable name.
-        room_iterator = self.max_rooms * 5
+        room_iterator = self.random_room_count * 5
 
         for i in range(room_iterator):
             # In this for loop we cycle through the iterator and
@@ -322,7 +354,7 @@ class DungeonGenerator():
             self.rooms.append(new_room)
 			# Make sure we're sticking to the defined maximum rooms.
 			# At the moment this is a constant, but should be changeable from command line.
-            if len(self.rooms) >= self.max_rooms:
+            if len(self.rooms) >= self.random_room_count:
                  break
 
         for aroom in range(len(self.rooms) - 1):
