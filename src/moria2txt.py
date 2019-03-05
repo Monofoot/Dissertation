@@ -18,6 +18,7 @@ parser.add_argument("--maxsize", help="Set the maximum size of each room.")
 parser.add_argument("--minsize", help="Set the minimum size of each room.")
 parser.add_argument("--height", help="The height of the dungeon.")
 parser.add_argument("--width", help="The width of the dungeon.")
+parser.add_argument("--tunnelsize", help="The minimum width of each tunnel. Handy for arena-type maps.")
 args = parser.parse_args()
 
 # Get the current unix time and store it in a clock variable.
@@ -381,20 +382,50 @@ class DungeonGenerator():
         # but this time we use the tunnels list instead of the rooms list.
         # It's important we allow validation for the third element in the tunnel list -
         # lots of time spent tracking down that bug.
-        for tunnel in self.tunnels:
-            x, y = tunnel[0]
-            x1, y1 = tunnel[1]
-            for across in range(abs(x - x1) + 1):
-                for up in range(abs(y - y1) + 1):
-                    self.dungeon[min(y, y1) + up][
-                        min(x, x1) + across] = 'floor'
-            
-            if len(tunnel) == 3:
-                x2, y2 = tunnel[2]
+        # Important to keep the spacing +2, as Chisel will not understand a one-space tunnel.
+        # The argparse kind of works here, but is very prone to going out of bounds...
+        # It might be worth just leaving it at a +2 default?
+        if args.tunnelsize:
+            for tunnel in self.tunnels:
+                x, y = tunnel[0] # Start
+                x1, y1 = tunnel[1] # End
+                for across in range(abs(x - x1) + int(args.tunnelsize)):
+                    for up in range(abs(y - y1) + int(args.tunnelsize)):
+                        self.dungeon[min(y, y1) + up][min(x, x1) + across] = 'floor'
+                
+                # Corners.
+                if len(tunnel) == 3:
+                    x2, y2 = tunnel[2]
 
-                for across in range(abs(x1 - x2) + 1):
-                    for up in range(abs(y1 - y2) + 1):
-                        self.dungeon[min(y1, y2) + up][min(x1, x2) + across] = 'floor'
+                    for across in range(abs(x1 - x2) + int(args.tunnelsize)):
+                        for up in range(abs(y1 - y2) + int(args.tunnelsize)):
+                            self.dungeon[min(y1, y2) + up][min(x1, x2) + across] = 'floor'
+        else:
+            for tunnel in self.tunnels:
+                x, y = tunnel[0] # Start
+                x1, y1 = tunnel[1] # End
+                for across in range(abs(x - x1) + 2):
+                    for up in range(abs(y - y1) + 2):
+                        # If across is ever greater than one then it means
+                        # we're travelling along the x axis. This means
+                        # that we need to draw the doors up.
+                        if across > 1:
+                            self.dungeon[min(y, y1) + up][min(x, x1)] = 'door'
+                        elif up > 1:
+                            self.dungeon[min(y, y1)][min(x, x1) + across] = 'door'
+                        self.dungeon[min(y, y1) + up][min(x, x1) + across] = 'floor'
+                
+                # Corners.
+                if len(tunnel) == 3:
+                    x2, y2 = tunnel[2]
+
+                    for across in range(abs(x1 - x2) + 2):
+                        for up in range(abs(y1 - y2) + 2):
+                            if across > 1:
+                                self.dungeon[min(y1, y2) + up][min(x1, x2)] = 'door'
+                            elif up > 1:
+                                self.dungeon[min(y1, y2)][min(x1, x2) + across] = 'door'
+                            self.dungeon[min(y1, y2) + up][min(x1, x2) + across] = 'floor'
                 
         # Set the walls by deciding if we're at the edge of a floor tile.
         for across in range(1, self.height - 1):
@@ -437,6 +468,8 @@ class DungeonGenerator():
                     tmp.append(self.tiles['floor'])
                 if y == 'wall':
                     tmp.append(self.tiles['wall'])
+                if y == 'door':
+                    tmp.append(self.tiles['door'])
                 # Also scan for the room_no key so we know this is
                 # where our room numbers are.
                 if isinstance(y, int):
