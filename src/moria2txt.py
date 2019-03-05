@@ -391,6 +391,13 @@ class DungeonGenerator():
                 x1, y1 = tunnel[1] # End
                 for across in range(abs(x - x1) + int(args.tunnelsize)):
                     for up in range(abs(y - y1) + int(args.tunnelsize)):
+                        # If across is ever greater than one then it means
+                        # we're travelling along the x axis. This means
+                        # that we need to draw the doors up.
+                        if across > 1:
+                            self.dungeon[min(y, y1) + up][min(x, x1)] = 'door'
+                        elif up > 1:
+                            self.dungeon[min(y, y1)][min(x, x1) + across] = 'door'
                         self.dungeon[min(y, y1) + up][min(x, x1) + across] = 'floor'
                 
                 # Corners.
@@ -399,6 +406,10 @@ class DungeonGenerator():
 
                     for across in range(abs(x1 - x2) + int(args.tunnelsize)):
                         for up in range(abs(y1 - y2) + int(args.tunnelsize)):
+                            if across > 1:
+                                self.dungeon[min(y1, y2) + up][min(x1, x2)] = 'door'
+                            elif up > 1:
+                                self.dungeon[min(y1, y2)][min(x1, x2) + across] = 'door'
                             self.dungeon[min(y1, y2) + up][min(x1, x2) + across] = 'floor'
         else:
             for tunnel in self.tunnels:
