@@ -204,6 +204,7 @@ class DungeonGenerator():
         return [x, y, vertical, horizontal]
 
     def CreateTunnel(self, x, y, x1, y1, join='xy'):
+        #TO-DO: enumerate the join choices so we can use our own random function?
         if x == x1 and y == y1 or x == x1 or y == y1:
             return [(x, y), (x1, y1)]
         else:
@@ -489,6 +490,8 @@ class DungeonGenerator():
                         self.dungeon[across + 1][up + 1] = 'wall'
 
     def DrawDungeon(self):
+        overloadedroom = ['a', 'b', 'c', 'd', 'e', 'f', 'g'
+                          'h', 'i', 'j', 'k', 'l', 'm', 'n']
         for x_num, x in enumerate(self.dungeon):
             tmp = []
             for y_num, y in enumerate(x):
@@ -515,7 +518,12 @@ class DungeonGenerator():
         #\n
         # map
         for room_id in enumerate(self.rooms):
-            print("define", room_id[0] + 1, "room ", room_id[0] + 1)
+            if room_id[0] + 1 < 9:
+                print("define", room_id[0] + 1, "room ", room_id[0] + 1)
+                print("\n")
+            else:
+                # Overload, need to convert the room number to a single-digit character.
+                print("define", "overloadedroom[0] + 1", "room ", room_id[0] + 1)
         print("\n")
         [print(x) for x in self.tiles_level]
 
