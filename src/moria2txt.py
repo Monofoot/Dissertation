@@ -132,6 +132,13 @@ def randomNumberNormalDistribution(mean, standard):
 	
 	return mean + offset
 
+def containsachar(str, set):
+    if str in set:
+        return 1 in [c in str for c in set]
+    else:
+        return False
+
+
 class DungeonGenerator():
     def __init__(self, min_size = 5, max_size = 10,
                 height = MAX_HEIGHT, width = MAX_WIDTH, 
@@ -377,7 +384,13 @@ class DungeonGenerator():
             for second_run in range(room[2]):
                 for third_run in range(room[3]):
                     self.dungeon[room[1] + third_run][room[0] + second_run] = 'floor'
-                    self.dungeon[room[1] + 1][room[0] + 1] = room_id
+                    # If room_id hits more than 9 iterations, assign letters to correspond with
+                    # numbers.
+                    if room_id < 9:
+                        self.dungeon[room[1] + 1][room[0] + 1] = room_id
+                    else:
+                        self.dungeon[room[1] + 1][room[0] + 1] = overloadedroom[room_id - 9]
+                        
 
         # Draw the tunnels here. We're doing the same for the room generation up above,
         # but this time we use the tunnels list instead of the rooms list.
@@ -451,7 +464,6 @@ class DungeonGenerator():
                         for up in range(abs(y1 - y2) + 2):
                             if across > 1:
                                 # This seems to be where the bug is coming from..
-                                print("We are in the across tunnel.")
                                 self.dungeon[min(y, y1)][min(x, x1) + up] = 'door'
                                 # I think we might need an extra conditional here. 
                             elif up > 1:
@@ -490,10 +502,10 @@ class DungeonGenerator():
                         self.dungeon[across + 1][up + 1] = 'wall'
 
     def DrawDungeon(self):
-        overloadedroom = ['a', 'b', 'c', 'd', 'e', 'f', 'g'
-                          'h', 'i', 'j', 'k', 'l', 'm', 'n']
+        
         for x_num, x in enumerate(self.dungeon):
             tmp = []
+            count = 0
             for y_num, y in enumerate(x):
                 if y == 'empty':
                     tmp.append(self.tiles['empty'])
@@ -505,8 +517,12 @@ class DungeonGenerator():
                     tmp.append(self.tiles['door'])
                 # Also scan for the room_no key so we know this is
                 # where our room numbers are.
+                # To-do: Not entirely happy with the below if statements...
+                # would prefer them to be in self.tiles, possibly change this in the future.
                 if isinstance(y, int):
                     tmp.append(str(y + 1))
+                if y in overloadedroom:
+                    tmp.append((str(y)))
             self.tiles_level.append(''.join(tmp))
         # Must pay strict attention to syntax in existing .txt maps.
         # Follow this format:
@@ -518,18 +534,18 @@ class DungeonGenerator():
         #\n
         # map
         for room_id in enumerate(self.rooms):
-            if room_id[0] + 1 < 9:
+            if room_id[0] + 1 <= 9:
                 print("define", room_id[0] + 1, "room ", room_id[0] + 1)
-                print("\n")
             else:
                 # Overload, need to convert the room number to a single-digit character.
-                print("define", "overloadedroom[0] + 1", "room ", room_id[0] + 1)
+                print("define", overloadedroom[room_id[0] - 9], "room", room_id[0] + 1)
         print("\n")
         [print(x) for x in self.tiles_level]
 
 def main():
     # The seed initializer is GOOD .... but until we get rid of
     # the use of random.choice it won't be perfect. Shame.
+    #TO-DO: go through python conventions, rename all functions and variables so they obey them
 	seedsInitialize(0)
 	testGen = DungeonGenerator()
 	testGen.DungeonGenerate()

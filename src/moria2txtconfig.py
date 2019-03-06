@@ -70,6 +70,12 @@ TILES = {'empty': ' ',
         'floor': ' ',
         'wall': '#',
         'door': '.'}
+# Can't have a room be > 9 as it overloads the map.
+# TO-DO: possibly add this overloadedroom to the TILES constant.
+overloadedroom = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
+                  'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                  'o', 'p', 'q', 'r', 's', 't', 'u',
+                  'v', 'w', 'x', 'y', 'z']
 # To-do: Write the definitions at some point. Example:
 # define 1 room 1 with the number 1 in the top left corner of each room.
 # Should be easy enough.
