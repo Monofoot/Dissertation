@@ -421,21 +421,40 @@ class DungeonGenerator():
                         # we're travelling along the x axis. This means
                         # that we need to draw the doors up.
                         if across > 1:
-                            self.dungeon[min(y, y1) + up][min(x, x1)] = 'door'
+                            #self.dungeon[min(y, y1) + up][min(x, x1)] = 'door'
+                            i = 1
                         elif up > 1:
-                            self.dungeon[min(y, y1)][min(x, x1) + across] = 'door'
+                            #self.dungeon[min(y, y1)][min(x, x1) + across] = 'door'
+                            i =1 
                         self.dungeon[min(y, y1) + up][min(x, x1) + across] = 'floor'
                 
                 # Corners.
+                # Door generation with corners is suuuuuper iffy right now.
+                # I've got it working for the most part, but as dungeons get more complex
+                # it seems to sometimes push against the very end of the tunnel corner
+                # and delete the wall there. Currently this isn't a problem with dungeons with around 4 - 8 rooms,
+                # but any more and it can get very buggy.
+                # I have a theory it could be because there are two tunnels heading in the same direction
+                # when this happens and it causes the doors to be placed in the middle of them (the very corner).
+                # BUG HUNTING UPDATE: The bug ONLY occurs when the tunnel goes UP and then ACROSS. ACROSS and UP works fine?
+
+                # ###################
+                #  bug in corners like this
+                # ###################
+                # # 
+                # # 
                 if len(tunnel) == 3:
                     x2, y2 = tunnel[2]
 
                     for across in range(abs(x1 - x2) + 2):
                         for up in range(abs(y1 - y2) + 2):
                             if across > 1:
-                                self.dungeon[min(y1, y2) + up][min(x1, x2)] = 'door'
+                                # This seems to be where the bug is coming from..
+                                print("We are in the across tunnel.")
+                                self.dungeon[min(y, y1)][min(x, x1) + up] = 'door'
+                                # I think we might need an extra conditional here. 
                             elif up > 1:
-                                self.dungeon[min(y1, y2)][min(x1, x2) + across] = 'door'
+                                self.dungeon[min(y, y1) + across][min(x, x1)] = 'door'
                             self.dungeon[min(y1, y2) + up][min(x1, x2) + across] = 'floor'
                 
         # Set the walls by deciding if we're at the edge of a floor tile.
