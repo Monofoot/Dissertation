@@ -323,7 +323,25 @@ class DungeonGenerator():
                     jroomb_y = roomb_y_2 + 1
                     tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y, 'bottom')
                     self.tunnels.append(tunnel)
-        
+
+     # Check the room we're in to see if it's inside of any other rooms.
+     # This is kind of experimental, I intend to check the coords of each room in here and
+     #  maybe regenerate any rooms which are inside of another room?   
+    def CheckRoom(self, room, rooms):
+        # Split the room into appropriate sections.
+        x = room[0]
+        y = room[1]
+        across = room[2]
+        up = room[3]
+
+        for a_room in rooms:
+            # Check if the rooms collide by comparing the x with the across and the y with the up.
+            # The idea here is that if they do, we can re-generate a room until it DOESN'T overlap and we can
+            # generate a dungeon with rooms which don't collide.
+            # ...hopefully
+            if (x < (a_room[0] + a_room[2]) and a_room[0] < (x + across) and y < (a_room[1] + a_room[3]) and a_room[1] < (y + up)):
+                return True
+        return False
 
     def DungeonGenerate(self):
 		# Start by building a dungeon of empty tiles.
@@ -342,6 +360,12 @@ class DungeonGenerator():
             # generate new rooms with random coordinates.
             # After storing these in temporary lists we append them to the global rooms list.
             new_room = self.DungeonBuildRoom()
+            new_room_list = self.rooms[:]
+
+            # Check the rooms. If they're not inside each other, append them to the list.
+            # Else we need to draw a new room.
+            if self.CheckRoom(new_room, new_room_list) is True:
+                new_room = self.DungeonBuildRoom()
             self.rooms.append(new_room)
 			# Make sure we're sticking to the defined maximum rooms.
             if len(self.rooms) >= self.random_room_count:
