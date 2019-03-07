@@ -18,7 +18,8 @@ parser.add_argument("--maxsize", help="Set the maximum size of each room.")
 parser.add_argument("--minsize", help="Set the minimum size of each room.")
 parser.add_argument("--height", help="The height of the dungeon.")
 parser.add_argument("--width", help="The width of the dungeon.")
-parser.add_argument("--tunnelsize", help="The minimum width of each tunnel. Handy for arena-type maps.")
+parser.add_argument("--tunnelsize", help="The minimum width of each tunnel. Handy for arena-type maps. Very prone to errors, so approach with caution.")
+parser.add_argument("--seed", help="Set an initial seed.")
 args = parser.parse_args()
 
 # Get the current unix time and store it in a clock variable.
@@ -33,23 +34,23 @@ def setRandomSeed(seed):
 	# IMPORTANT VARIABLE #
 	# Driver for most of the RNG. Pay attention as any problems
 	# are likely derived from rnd_seed!
-	global rnd_seed
-	rnd_seed = ((seed % (RNG_M - 1)) + 1)
-	return rnd_seed
+    global rnd_seed
+    rnd_seed = ((seed % (RNG_M - 1)) + 1)
+    return rnd_seed
 
 def seedsInitialize(seed):
-	clock_var = 0
+    clock_var = 0
 	# If seed is equal to 0 then generate a new seed
-	if seed == 0:
-		clock_var = getUnixTime()
+    if seed == 0:
+        clock_var = getUnixTime()
 	# else set the seed to the parsed seed
-	else:
-		clock_var = seed
+    else:
+        clock_var = seed
 	
 	# Make it a litte more random. Problem before was that it's just the clock!
-	clock_var += 8762
-	clock_var += 113452
-	setRandomSeed(clock_var)
+    clock_var += 8762
+    clock_var += 113452
+    setRandomSeed(clock_var)
 
 # The magic.
 # Notes: my testing is near non-existent for this Lehmer
@@ -132,11 +133,9 @@ def randomNumberNormalDistribution(mean, standard):
 	
 	return mean + offset
 
-def containsachar(str, set):
-    if str in set:
-        return 1 in [c in str for c in set]
-    else:
-        return False
+# Function for cycling through a set and returning a random element.
+def RandomChoice(set):
+    return set[randomBetweenAB(1, len(set) - 1)]
 
 
 class DungeonGenerator():
@@ -227,7 +226,7 @@ class DungeonGenerator():
             # We must have at least one choice (otherwise we're returning None), so use random choice to decide a top
             # or bottom. To-do would be to write my own random choice function if I have time.
             elif join is 'xy':
-                jtype = random.choice(['top', 'bottom'])
+                jtype = RandomChoice(['top', 'bottom'])
             else:
                 # Last case. If we're not random enough, force this.
                 jtype = join
@@ -306,7 +305,7 @@ class DungeonGenerator():
                 # Not happy using random choice here, hopefully will
                 # have enough time to write my own random choice function.
             if join is 'xy':
-                jtype = random.choice(['top', 'bottom'])
+                jtype = RandomChoice(['top', 'bottom'])
             # If it's not xy, then set our type to whatever is being parsed.
             # Most of the time this will just default to xy, though.
             else:
@@ -435,10 +434,10 @@ class DungeonGenerator():
                         # we're travelling along the x axis. This means
                         # that we need to draw the doors up.
                         if across > 1:
-                            #self.dungeon[min(y, y1) + up][min(x, x1)] = 'door'
+                            self.dungeon[min(y, y1) + up][min(x, x1)] = 'door'
                             i = 1
                         elif up > 1:
-                            #self.dungeon[min(y, y1)][min(x, x1) + across] = 'door'
+                            self.dungeon[min(y, y1)][min(x, x1) + across] = 'door'
                             i =1 
                         self.dungeon[min(y, y1) + up][min(x, x1) + across] = 'floor'
                 
@@ -457,6 +456,12 @@ class DungeonGenerator():
                 # ###################
                 # # 
                 # # 
+                # BUG HUNTING UPDATE: I'm leaving the above comments in, JUST IN CASE...
+                # but it seems I've accidentally fixed the bug. I'm not entirely sure out,
+                # but when I completely wrote the use of the random module out of this program
+                # the tunnels stopped bugging. RandomChoice() seems to have cured it. I think I have
+                # a small theory as to how this has happened, but for now I'm not going to jinx it
+                # and I'm just going to leave it alone...
                 if len(tunnel) == 3:
                     x2, y2 = tunnel[2]
 
@@ -546,10 +551,13 @@ def main():
     # The seed initializer is GOOD .... but until we get rid of
     # the use of random.choice it won't be perfect. Shame.
     #TO-DO: go through python conventions, rename all functions and variables so they obey them
-	seedsInitialize(0)
-	testGen = DungeonGenerator()
-	testGen.DungeonGenerate()
-	testGen.DrawDungeon()
+    if args.seed:
+        seedsInitialize(int(args.seed))
+    else:
+        seedsInitialize(0)
+    testGen = DungeonGenerator()
+    testGen.DungeonGenerate()
+    testGen.DrawDungeon()
 
 
 main()
