@@ -4,10 +4,6 @@
 from moria2txtconfig import *
 import time
 import argparse
-# I'm really unhappy about doing this,
-# but didn't want to write a function for random selection of strings.
-# If I have time then I will come back and change this.
-import random
 
 # Allow user to input variables which will affect Moria's
 # constants.
@@ -56,7 +52,7 @@ def seedsInitialize(seed):
 # Notes: my testing is near non-existent for this Lehmer
 # generator. It looks to work perfectly fine to me,
 # but should problems arise in the future then I shoulder the blame
-# as I did a shoddy job in writing any tests for this.
+# as I did a shoddy job in writing any tests.
 def rnd():
 	global rnd_seed
 	high = (rnd_seed // RNG_Q)
@@ -70,23 +66,10 @@ def rnd():
 
 	return rnd_seed
 
-# I wrote this one myself so it might not be very elegant,
-# I'm sure it wouldn't pass any speed tests... but it does the job for now, anyway.
-# I know randint() exists but if a seed initializer exists in this script
-# I'd prefer to use that seed than spool a new one for the random module.
 def randomBetweenAB(min, max):
-    # TO-DO:
-    # this function is broken. It works with lower
-    # order number but seems to fall apart when it comes to
-    # generating the tunnels. For now I'm going to substitute it
-    # with random.int, but it means that tunnels will be left out of
-    # potential seed reproduction. This makes me very sad
-    # and when I have enough time I will come back here to write a very
-    # pretty and mathematical min max generator.
     # I've read online that something like:
     # Math.floor(Math.random() * (myMax - myMin +1)) + myMin;
     # should work? Much like the randomNumber() function below.
-    # return int(rnd() * (max - min + 1) + min)
     return int(rnd() % (max - min + 1) + min)
 
 # Return a random number with a max constraint.
@@ -137,6 +120,7 @@ def randomNumberNormalDistribution(mean, standard):
 def RandomChoice(set):
     return set[randomBetweenAB(1, len(set) - 1)]
 
+# TO-DO: Strip the whole of the random functions above into a separate library/module.
 
 class DungeonGenerator():
     def __init__(self, min_size = 5, max_size = 10,
@@ -146,10 +130,8 @@ class DungeonGenerator():
         # Check some user validation here.
         if args.maxrooms or args.minrooms:
             # Add an extra layer of validation for the maxrooms.
-            # This is because we cannot allow them to exceed 19.
             # Moria usually defaults to around 32 but because of the Chisel porting
-            # we run out of character spaces for rooms above 19.
-            # Actually... this might not be true..... double check this
+            # rooms can often get too confusing.
             # If we just have a max room, default the min room
             if not args.minrooms: 
             # Else if we just have the min room, default the max room
@@ -210,11 +192,9 @@ class DungeonGenerator():
         return [x, y, vertical, horizontal]
 
     def CreateTunnel(self, x, y, x1, y1, join='xy'):
-        #TO-DO: enumerate the join choices so we can use our own random function?
         if x == x1 and y == y1 or x == x1 or y == y1:
             return [(x, y), (x1, y1)]
         else:
-            # Hopefully our 'join' parameter works here. ...currently experimental.
             jtype = None
             # Do some set theory here. Thankfully we don't need to do the math ourself as
             # the magic of Python provides a function for this.
@@ -224,7 +204,7 @@ class DungeonGenerator():
                  [self.height - 1, self.height - 2]).intersection(set([y, y1])):
                 jtype = 'top'
             # We must have at least one choice (otherwise we're returning None), so use random choice to decide a top
-            # or bottom. To-do would be to write my own random choice function if I have time.
+            # or bottom.
             elif join is 'xy':
                 jtype = RandomChoice(['top', 'bottom'])
             else:
@@ -243,8 +223,6 @@ class DungeonGenerator():
     # Function to sort the rooms and make sure there are connecting doors
     # or entries so the map is traverseable. This fixes the problem I was having
     # of rooms existing detached from each other.
-    # TO-DO: Tunnel generation is currently breaking my min max generator.
-    # Figure it out when you have enough time. :(
     def DungeonConnections(self, rooma, roomb, join='xy'):
         # Store room a and b in a list.
         sorted_room = [rooma, roomb]
@@ -302,8 +280,6 @@ class DungeonGenerator():
         # However, if there's no collisions then we generate our own links:
         else:
             jtype = None
-                # Not happy using random choice here, hopefully will
-                # have enough time to write my own random choice function.
             if join is 'xy':
                 jtype = RandomChoice(['top', 'bottom'])
             # If it's not xy, then set our type to whatever is being parsed.
@@ -368,7 +344,6 @@ class DungeonGenerator():
             new_room = self.DungeonBuildRoom()
             self.rooms.append(new_room)
 			# Make sure we're sticking to the defined maximum rooms.
-			# At the moment this is a constant, but should be changeable from command line.
             if len(self.rooms) >= self.random_room_count:
                  break
 
@@ -507,7 +482,6 @@ class DungeonGenerator():
                         self.dungeon[across + 1][up + 1] = 'wall'
 
     def DrawDungeon(self):
-        
         for x_num, x in enumerate(self.dungeon):
             tmp = []
             count = 0
@@ -548,8 +522,6 @@ class DungeonGenerator():
         [print(x) for x in self.tiles_level]
 
 def main():
-    # The seed initializer is GOOD .... but until we get rid of
-    # the use of random.choice it won't be perfect. Shame.
     #TO-DO: go through python conventions, rename all functions and variables so they obey them
     if args.seed:
         seedsInitialize(int(args.seed))
