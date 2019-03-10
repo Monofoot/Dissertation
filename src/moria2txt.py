@@ -3,8 +3,6 @@ from moria2txtconfig import *
 import time
 import argparse
 
-#TO-DO function to save to file, use argparse for user to enter directory
-
 # Argparse is essentially getopt. 
 parser = argparse.ArgumentParser(description="Map generator for Penguin Tower's ASCII levels. Note: if you do not specify a file path, the map will print to terminal. Pipe this to a file manually by typing '> map.txt'")
 parser.add_argument("--maxrooms", help="Set the maximum amount of rooms.")
@@ -119,8 +117,6 @@ def RandomChoice(set):
 def DistanceBetween(dfrom, dto):
     d = dfrom - dto
     return d
-
-# TO-DO: Strip the whole of the random functions above into a separate library/module.
 
 class DungeonGenerator():
     def __init__(self, min_size = 5, max_size = 10,
