@@ -1,26 +1,24 @@
 #!/usr/bin/env python
-# Talk to Gaius about this. Easily reversible if it proves
-# a bad idea.
 from moria2txtconfig import *
 import time
 import argparse
 
-# Allow user to input variables which will affect Moria's
-# constants.
-parser = argparse.ArgumentParser(description="Map generator for Penguin Tower's ASCII levels.")
+#TO-DO function to save to file, use argparse for user to enter directory
+
+# Argparse is essentially getopt. 
+parser = argparse.ArgumentParser(description="Map generator for Penguin Tower's ASCII levels. Note: if you do not specify a file path, the map will print to terminal. Pipe this to a file manually by typing '> map.txt'")
 parser.add_argument("--maxrooms", help="Set the maximum amount of rooms.")
 parser.add_argument("--minrooms", help="Set the minimum amount of rooms.")
 parser.add_argument("--maxsize", help="Set the maximum size of each room.")
 parser.add_argument("--minsize", help="Set the minimum size of each room.")
-parser.add_argument("--height", help="The height of the dungeon.")
-parser.add_argument("--width", help="The width of the dungeon.")
-parser.add_argument("--tunnelsize", help="The minimum width of each tunnel. Handy for arena-type maps. Very prone to errors, so approach with caution.")
+parser.add_argument("--height", help="Set the height of the dungeon.")
+parser.add_argument("--width", help="Set the width of the dungeon.")
+parser.add_argument("--tunnelsize", help="Set the minimum width of each tunnel. Handy for arena-type maps. Very prone to errors, so approach with caution.")
 parser.add_argument("--seed", help="Set an initial seed.")
+parser.add_argument("--dir", help="Set the path for the map text file.")
 args = parser.parse_args()
 
-# Get the current unix time and store it in a clock variable.
-# Use the clock variable to parse a new random seed in
-# setRandomSeed()
+# Use the clock to get and store a clock variable.
 def getUnixTime():
 	clock = int(time.time())
 	return clock
@@ -48,8 +46,7 @@ def seedsInitialize(seed):
     clock_var += 113452
     setRandomSeed(clock_var)
 
-# The magic.
-# Notes: my testing is near non-existent for this Lehmer
+# The magic. Notes: my testing is near non-existent for this Lehmer
 # generator. It looks to work perfectly fine to me,
 # but should problems arise in the future then I shoulder the blame
 # as I did a shoddy job in writing any tests.
@@ -76,7 +73,6 @@ def randomBetweenAB(min, max):
 def randomNumber(max):
 	return int((rnd() % max) + 1)
 
-# Generate a random number of normal distribution.
 def randomNumberNormalDistribution(mean, standard):
 	# Start by grabbing a random number from MAX_SHORT constant.
 	tmp = randomNumber(MAX_SHORT)
@@ -120,13 +116,16 @@ def randomNumberNormalDistribution(mean, standard):
 def RandomChoice(set):
     return set[randomBetweenAB(1, len(set) - 1)]
 
+def DistanceBetween(dfrom, dto):
+    d = dfrom - dto
+    return d
+
 # TO-DO: Strip the whole of the random functions above into a separate library/module.
 
 class DungeonGenerator():
     def __init__(self, min_size = 5, max_size = 10,
                 height = MAX_HEIGHT, width = MAX_WIDTH, 
 				random_room_count = 0):
-        # Moria uses 32 dungeons consistently, but this should hopefully randomize that.
         # Check some user validation here.
         if args.maxrooms or args.minrooms:
             # Add an extra layer of validation for the maxrooms.
@@ -138,14 +137,18 @@ class DungeonGenerator():
             # Uhh.... For now let's default it to 1, that seems safe.
                 args.minrooms = 1
             elif not args.maxrooms:
-                # Moria uses the mean of 32 rooms as default.
-                args.maxrooms = randomNumber(DUN_ROOMS_MEAN)
+                args.maxrooms = randomNumberNormalDistribution(DUN_ROOMS_MEAN, 2)
             self.random_room_count = randomBetweenAB(int(args.maxrooms), int(args.minrooms))
         else:
-            self.random_room_count = randomNumber(DUN_ROOMS_MEAN)
+            self.random_room_count = randomNumberNormalDistribution(DUN_ROOMS_MEAN, 2)
+            print("Room count: ", self.random_room_count)
         if args.maxsize:
             self.max_size = int(args.maxsize)
         else:
+            # Moria sets a specific max x and y for their rooms,
+            # but it uses the structs I've actively tried to move away from
+            # so using a general max size might be better. It'll be easy to set a max height
+            # and width for each room in the future, but for now this is soo much simpler.
             self.max_size = max_size
         if args.minsize:
             self.min_size = int(args.minsize)
@@ -164,9 +167,6 @@ class DungeonGenerator():
         self.tiles = TILES
         self.tiles_level = []
         self.tunnels = []
-
-        # Soon I'd like to be able to set these parameters
-        # through the command line, it should be easy enough.
 
     def DungeonBuildRoom(self):
 		# generateCave will return a list with four entries:
@@ -189,6 +189,35 @@ class DungeonGenerator():
 		# Return a list of the four integers.
 		# This list will be the main driver for the dungeon generation. 
 		# It sets where the rooms wil be built and their size.
+        return [x, y, vertical, horizontal]
+    
+    def DungeonBuildRoomRectangles(self):
+        vertical   = 0
+        horizontal = 0
+        x          = 0
+        y          = 0
+
+        vertical   = randomBetweenAB(self.min_size, 50) # Moria has this set to 11, but this adaptation requires a much larger magnifier - about 50.
+        horizontal = randomBetweenAB(self.min_size, 3) # 3 is a rubbish number, but if user changes min_size then it might be worth something.
+        x          = randomBetweenAB(1, (self.width - vertical - 1))
+        y          = randomBetweenAB(1, (self.height - horizontal - 1))
+        
+        return [x, y, vertical, horizontal]
+
+    # This is for future development. As of now our rooms only have two axis, x and y, but
+    # for now the unusual Moria rooms will have to be shelved.
+    def DungeonBuildRoomCrossShaped(self):
+        vertical   = 0
+        horizontal = 0
+        x          = 0
+        y          = 0
+        random_offset = 2 + randomNumber(2)
+
+        vertical   = randomBetweenAB(self.min_size, self.max_size)
+        horizontal = randomBetweenAB(self.min_size, self.max_size)
+        x          = randomBetweenAB(1, (self.width - vertical - 1))
+        y          = randomBetweenAB(1, (self.height - horizontal - 1))
+
         return [x, y, vertical, horizontal]
 
     def CreateTunnel(self, x, y, x1, y1, join='xy'):
@@ -324,9 +353,9 @@ class DungeonGenerator():
                     tunnel = self.CreateTunnel(jrooma_x, jrooma_y, jroomb_x, jroomb_y, 'bottom')
                     self.tunnels.append(tunnel)
 
-     # Check the room we're in to see if it's inside of any other rooms.
+     # Check the room we're in to see if it's inside any other rooms.
      # This is kind of experimental, I intend to check the coords of each room in here and
-     #  maybe regenerate any rooms which are inside of another room?   
+     # maybe regenerate any rooms which are inside of another room?   
     def CheckRoom(self, room, rooms):
         # Split the room into appropriate sections.
         x = room[0]
@@ -359,7 +388,19 @@ class DungeonGenerator():
             # In this for loop we cycle through the iterator and
             # generate new rooms with random coordinates.
             # After storing these in temporary lists we append them to the global rooms list.
-            new_room = self.DungeonBuildRoom()
+            # Moria has several "unusual rooms", which can result in cross shaped or rectangular rooms
+            # or rooms inside of rooms. I've implemented a structure for providing that, and included rectangle rooms
+            # as proof of concept, but more complicated rooms like the others might take a bit of work.
+            room_type = randomNumber(3)
+            if room_type == 1:
+                new_room = self.DungeonBuildRoomCrossShaped()
+            elif room_type == 2:
+                new_room = self.DungeonBuildRoomRectangles()
+            elif room_type == 3:
+                new_room = self.DungeonBuildRoom()
+            else:
+                new_room = self.DungeonBuildRoom()
+            
             new_room_list = self.rooms[:]
 
             # Check the rooms. If they're not inside each other, append them to the list.
@@ -388,6 +429,10 @@ class DungeonGenerator():
                         self.dungeon[room[1] + 1][room[0] + 1] = room_id
                     else:
                         self.dungeon[room[1] + 1][room[0] + 1] = overloadedroom[room_id - 9]
+                    # Set a random chance to spawn a monster.
+                    # Experimental.
+                    #if randomBetweenAB(1, 10) < 3:
+                        #self.dungeon[room[1] + randomBetweenAB(1, 4)][room[0] + randomBetweenAB(1, 4)] = 'm'
                         
 
         # Draw the tunnels here. We're doing the same for the room generation up above,
@@ -456,7 +501,7 @@ class DungeonGenerator():
                 # # 
                 # # 
                 # BUG HUNTING UPDATE: I'm leaving the above comments in, JUST IN CASE...
-                # but it seems I've accidentally fixed the bug. I'm not entirely sure out,
+                # but it seems I've accidentally fixed the bug. I'm not entirely sure how,
                 # but when I completely wrote the use of the random module out of this program
                 # the tunnels stopped bugging. RandomChoice() seems to have cured it. I think I have
                 # a small theory as to how this has happened, but for now I'm not going to jinx it
@@ -518,6 +563,9 @@ class DungeonGenerator():
                     tmp.append(self.tiles['wall'])
                 if y == 'door':
                     tmp.append(self.tiles['door'])
+                # Experimental for monsters. Plug tiles into this, add a new tile for monsters.
+                #if y == 'm':
+                #    tmp.append('m')
                 # Also scan for the room_no key so we know this is
                 # where our room numbers are.
                 # To-do: Not entirely happy with the below if statements...
@@ -536,14 +584,28 @@ class DungeonGenerator():
         # define y extra
         #\n
         # map
-        for room_id in enumerate(self.rooms):
-            if room_id[0] + 1 <= 9:
-                print("define", room_id[0] + 1, "room ", room_id[0] + 1)
-            else:
-                # Overload, need to convert the room number to a single-digit character.
-                print("define", overloadedroom[room_id[0] - 9], "room", room_id[0] + 1)
-        print("\n")
-        [print(x) for x in self.tiles_level]
+        if args.dir:
+            path = args.dir
+            f=open(path+".txt","w+")
+            for room_id in enumerate(self.rooms):
+                if room_id[0] + 1 <= 9:
+                    f.write("define " + str(room_id[0] + 1) + " " + "room " + str(room_id[0] + 1) + "\n")
+                else:
+                    # Overload, need to convert the room number to a single-digit character.
+                    f.write("define " + str(overloadedroom[room_id[0] - 9]) + " " + "room" + str(room_id[0] + 1) + "\n")
+            f.write("\n")
+            for x in self.tiles_level:
+                f.write(x + "\n")
+            f.close()
+        else:
+            for room_id in enumerate(self.rooms):
+                if room_id[0] + 1 <= 9:
+                    print("define", room_id[0] + 1, "room ", room_id[0] + 1)
+                else:
+                    # Overload, need to convert the room number to a single-digit character.
+                    print("define", overloadedroom[room_id[0] - 9], "room", room_id[0] + 1)
+            print("\n")
+            [print(x) for x in self.tiles_level]
 
 def main():
     #TO-DO: go through python conventions, rename all functions and variables so they obey them

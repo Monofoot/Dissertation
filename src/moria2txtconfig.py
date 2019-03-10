@@ -56,11 +56,12 @@ normal_table = [206,     613,    1022,    1430,    1838,    2245,    2652,    30
 
 # Dungeon Parameters
 
-MAX_HEIGHT = 64
+MAX_HEIGHT = 66
 MAX_WIDTH = 198
 SCREEN_HEIGHT = 22
 SCREEN_WIDTH = 66
-DUN_ROOMS_MEAN = 32
+DUN_ROOMS_MEAN = 32 # In my opinion 32 is a bit high and almost always produces a poor result, but will stick to Moria way.
+DUN_UNUSUAL_ROOMS = 300 # Chance by level/x of encountering an unusual room. For future development, could add monsters and treasure only to this room.
 #TO-DO: Find Moria's min and max room size?
 # Moria defines blank spaces as '.', but our tiles
 # must correspond with the lexical semantics established in
