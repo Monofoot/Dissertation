@@ -14,8 +14,6 @@ using UnityEngine.UI;
 
 public class map2unity : MonoBehaviour {
 
-	string path;
-
 	// Maybe not have this in a function if it proves too difficult.
 	void SetupGui(){
 		// Create the GUI and bind it to the main camera.
@@ -50,19 +48,30 @@ public class map2unity : MonoBehaviour {
 		 Text userPromptText = userPrompt.AddComponent<Text>();
 		 userPromptText.font = Resources.GetBuiltinResource<Font>("Arial.ttf"); // This SHOULD be universal across Linux and Windows.
 		 userPromptText.color = Color.black;
-		 userPromptText.text = "Please enter the full directory of your map file: \n Ufortunately you must type this by hand. No fancy browsing. Unity security is tight on this.";
+		 userPromptText.text = "Please enter the full directory of your map file: \n Unfortunately you must type this by hand. No fancy browsing. Unity security is tight on this.";
 		 // Position the text.
 		 RectTransform userPromptTextTransform = userPromptText.GetComponent<RectTransform>();
 		 userPromptTextTransform.localPosition = new Vector3(0, 0, 0);
 		 userPromptTextTransform.sizeDelta = new Vector2(800, 400);
 
 		 // Prompt the user for a file path.
-		 path = GUI.TextField(new Rect(10, 10, 200, 20), path, 25);
+		 GameObject path = new GameObject();
+		 path.transform.parent = canvasObject.transform;
+		 path.name = "User Input";
+		 RectTransform pathTransform = path.AddComponent<RectTransform>();
+		 CanvasRenderer pathRenderer = path.AddComponent<CanvasRenderer>();
+		 Image pathImage = path.AddComponent<Image>();
+		 pathImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd"); // https://docs.unity3d.com/ScriptReference/Resources.Load.html Refer to this, work from here.
+		 InputField pathInput = path.AddComponent<InputField>();
+
+
+
+		 
 	}
 
 	void Start () {
-		SetupGui();
-		
+		 // Prompt the user for a file path.
+		 SetupGui();
 	}
 	
 	void Update () {
